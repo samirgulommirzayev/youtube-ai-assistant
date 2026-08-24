@@ -15,13 +15,13 @@ if not GEMINI_API_KEY:
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-MODEL = "gemini-3.6-flash"  # tez va sifatli
+MODEL = "gemini-2.5-flash"  # Asosiy barqaror model
 
 
-def ask_ai(system_prompt: str, user_prompt: str, max_tokens: int = 1500) -> str:
+def ask_ai(system_prompt: str, user_prompt: str, max_tokens: int = 8192) -> str:
     """
     Gemini'ga so'rov yuboradi, matn javobini qaytaradi.
-    content_generator.py va channel_coach.py shu funksiyani chaqiradi.
+    max_tokens default 8192 ga oshirildi (javob uzilib qolmasligi uchun).
     """
     try:
         response = client.models.generate_content(
@@ -39,11 +39,11 @@ def ask_ai(system_prompt: str, user_prompt: str, max_tokens: int = 1500) -> str:
 
 def generate_image(prompt: str, save_path: str = "output_image.png") -> str:
     """
-    Logo/banner uchun rasm generatsiyasi (keyinroq ishlatamiz).
+    Logo/banner uchun rasm generatsiyasi.
     """
     try:
         response = client.models.generate_content(
-            model="gemini-3.6-flash-image",
+            model="imagen-3.0-generate-002",
             contents=prompt,
         )
         for part in response.candidates[0].content.parts:
