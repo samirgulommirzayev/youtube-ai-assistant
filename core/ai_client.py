@@ -15,13 +15,14 @@ if not GEMINI_API_KEY:
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
-MODEL = "gemini-2.5-flash"  # Asosiy barqaror model
+# Google tavsiya qilgan rasmiy model kodi
+MODEL = "gemini-3.6-flash"  
 
 
 def ask_ai(system_prompt: str, user_prompt: str, max_tokens: int = 8192) -> str:
     """
     Gemini'ga so'rov yuboradi, matn javobini qaytaradi.
-    max_tokens default 8192 ga oshirildi (javob uzilib qolmasligi uchun).
+    max_tokens default 8192 qilib o'rnatildi (matn yarimta bo'lib uzilmaydi).
     """
     try:
         response = client.models.generate_content(
@@ -33,24 +34,5 @@ def ask_ai(system_prompt: str, user_prompt: str, max_tokens: int = 8192) -> str:
             ),
         )
         return response.text.strip()
-    except Exception as e:
-        return f"[Xatolik yuz berdi]: {e}"
-
-
-def generate_image(prompt: str, save_path: str = "output_image.png") -> str:
-    """
-    Logo/banner uchun rasm generatsiyasi.
-    """
-    try:
-        response = client.models.generate_content(
-            model="imagen-3.0-generate-002",
-            contents=prompt,
-        )
-        for part in response.candidates[0].content.parts:
-            if part.inline_data:
-                with open(save_path, "wb") as f:
-                    f.write(part.inline_data.data)
-                return save_path
-        return "[Rasm qaytmadi, promptni tekshiring]"
     except Exception as e:
         return f"[Xatolik yuz berdi]: {e}"
