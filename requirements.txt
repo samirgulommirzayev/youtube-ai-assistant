@@ -2,7 +2,6 @@ streamlit
 google-genai
 python-dotenv
 rich
-# yangi kutubxona:
 Pillow
 openai
 aiogram
