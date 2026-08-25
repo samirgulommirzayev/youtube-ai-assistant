@@ -1,6 +1,5 @@
 import streamlit as st
 from core.ai_client import ask_ai, generate_image
-from core.content_generator import YouTubeSsenarist
 
 # --- 0. Konfiguratsiya ---
 MUALLIF_ISMI = "Samir Gulommirzoyev"
