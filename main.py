@@ -226,19 +226,26 @@ with tab3:
 with tab4:
     st.header("🖼️ AI Logo va Banner Generatori")
     kanal_nomi = st.text_input("Kanal nomini kiriting:", placeholder="masalan: Ulusama Tech")
-    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: Gaming / Gaming News")
+    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: Gaming / Roblox")
     
     if st.button("Logo va Banner Yaratish", key="tab4_btn"):
         if not kanal_nomi.strip() or not nisha_4.strip():
             st.warning("Iltimos, kanal nomi va yo'nalishini kiriting!")
         else:
             with st.spinner("AI Logo va Banner rasmlarini generatsiya qilmoqda..."):
-                logo_prompt = urllib.parse.quote(f"modern vector logo for youtube channel {kanal_nomi}, {nisha_4} theme, professional design, 8k")
-                banner_prompt = urllib.parse.quote(f"youtube banner for {kanal_nomi}, {nisha_4} theme, colorful artwork, high quality")
+                import random
+                seed_val = random.randint(1, 99999)
                 
-                # O'lchamlarni barqaror standartga o'tkazamiz
-                logo_url = f"https://image.pollinations.ai/prompt/{logo_prompt}?width=512&height=512&nologo=true"
-                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?width=1024&height=576&nologo=true"
+                # Begona belgilardan tozalangan oddiy prompt
+                clean_name = kanal_nomi.strip().replace(" ", "_")
+                clean_nisha = nisha_4.strip().replace(" ", "_")
+                
+                logo_prompt = f"vector_logo_for_{clean_name}_{clean_nisha}_gaming_style"
+                banner_prompt = f"youtube_banner_art_for_{clean_name}_{clean_nisha}_hd_wallpaper"
+                
+                # Eng sodda va ishlaydigan URL struktura
+                logo_url = f"https://image.pollinations.ai/prompt/{logo_prompt}?seed={seed_val}"
+                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?seed={seed_val+1}"
                 
                 st.success("Rasmlar tayyor bo'ldi!")
                 
@@ -251,7 +258,6 @@ with tab4:
                 with col_banner:
                     st.subheader("🖼️ Kanal Banneri")
                     st.image(banner_url, caption=f"{kanal_nomi} Banner", use_container_width=True)
-
 # 5-TAB: AI Strateg
 with tab5:
     st.header("📈 Ulusama AI — YouTube O'sish Analitigi & Chat")
