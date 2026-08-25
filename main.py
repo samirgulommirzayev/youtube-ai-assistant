@@ -97,7 +97,7 @@ st.sidebar.success(f"Xush kelibsiz, **{st.session_state.user_name}**!")
 selected_model = st.sidebar.selectbox(
     "🧠 AI Modelini tanlang:",
     options=[
-        "Gemini 2.5 Flash (Google)",
+        "Gemini 3.6 Flash (Google)",
         "ChatGPT (GPT-4o Mini)",
         "Claude 3.5 Sonnet (Anthropic)"
     ]
@@ -113,7 +113,7 @@ def ask_ai(prompt):
         if not gemini_client:
             return "❌ GEMINI_API_KEY topilmadi!"
         res = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.6-flash",
             contents=prompt
         )
         return res.text
