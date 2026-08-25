@@ -77,13 +77,11 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True) 
-(
-    page_title=f"Ulusama AI by {MUALLIF_ISMI}",
-    page_icon="🤖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+st.set_page_config(
+    page_title=f"Ulusama AI by Samir Gulommirzoyev",
+    page_icon="🚀",
+    layout="wide"
 )
-
 # --- Sidebar (Yon panel) ---
 with st.sidebar:
     st.title("🤖 Ulusama AI")
