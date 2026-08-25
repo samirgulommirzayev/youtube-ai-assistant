@@ -98,6 +98,9 @@ selected_model = st.sidebar.selectbox(
     "🧠 AI Modelini tanlang:",
     options=[
         "Gemini 3.6 Flash (Google)",
+        "DeepSeek V3 (Bepul)",
+        "Llama 3.3 70B (Bepul)",
+        "Qwen 2.5 72B (Bepul)",
         "ChatGPT (GPT-4o Mini)",
         "Claude 3.5 Sonnet (Anthropic)"
     ]
@@ -121,10 +124,17 @@ def ask_ai(prompt):
         if not openrouter_client:
             return "❌ OPENROUTER_API_KEY topilmadi!"
         
-        model_name = "openai/gpt-4o-mini" if "ChatGPT" in selected_model else "anthropic/claude-3.5-sonnet"
+        # Modellarni OpenRouter ID'lariga moslash
+        model_map = {
+            "DeepSeek V3 (Bepul)": "deepseek/deepseek-chat:free",
+            "Llama 3.3 70B (Bepul)": "meta-llama/llama-3.3-70b-instruct:free",
+            "Qwen 2.5 72B (Bepul)": "qwen/qwen-2.5-72b-instruct:free",
+            "ChatGPT (GPT-4o Mini)": "openai/gpt-4o-mini",
+            "Claude 3.5 Sonnet (Anthropic)": "anthropic/claude-3.5-sonnet"
+        }
         
         res = openrouter_client.chat.completions.create(
-            model=model_name,
+            model=model_map[selected_model],
             messages=[{"role": "user", "content": prompt}]
         )
         return res.choices[0].message.content
