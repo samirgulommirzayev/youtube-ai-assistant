@@ -21,15 +21,74 @@ with st.sidebar:
 # --- Asosiy Oyna Sarlavhasi ---
 st.title("🚀 Ulusama AI — To'liq YouTube Agent")
 
-# --- 1. Tablarni yaratish ---
-tab_scenario, tab_visual, tab_chat = st.tabs([
+# --- 1. Tablarni yaratish (5 ta bo'lim) ---
+tab_niche, tab_scenario, tab_seo, tab_visual, tab_chat = st.tabs([
+    "💡 Nisha & G'oya Tanlash",
     "🎬 YouTube Ssenariy", 
+    "🏷️ SEO & Metadata",
     "🖼️ Logo & Banner Generator", 
     "💬 AI Maslahatchi (Chat)"
 ])
 
 # ==========================================================
-# --- Tab 1: YouTube Ssenariy ---
+# --- Tab 1: Nisha & G'oya Tanlash ---
+# ==========================================================
+with tab_niche:
+    st.header("💡 Qiziqishingizga mos YouTube Yo'nalishini Topish")
+    st.markdown("Qiziqishlaringiz va imkoniyatlaringizni kiriting — AI sizga eng mos yo'nalish va video g'oyalarini taklif qiladi.")
+    
+    col_n1, col_n2 = st.columns([1, 2])
+    
+    with col_n1:
+        st.subheader("Siz haqida")
+        interests = st.text_area(
+            "Qiziqishlaringiz va sevimli mashg'ulotlaringiz:", 
+            placeholder="Masalan: Texnika, o'yinlar, kitob o'qish, futbol, montaj qilish, chet tillari...",
+            key="n_interests"
+        )
+        skills = st.text_input(
+            "Mavjud ko'nikmalaringiz (ixtiyoriy):", 
+            placeholder="Masalan: Kamera qarshisida erkin gapirish, videoni tez montaj qilish...",
+            key="n_skills"
+        )
+        time_available = st.selectbox(
+            "Haftasiga ajrata oladigan vaqtingiz:",
+            ["1-3 soat", "4-7 soat", "10+ soat (To'liq stavka)"],
+            key="n_time"
+        )
+        
+        find_niche_btn = st.button("Yo'nalish va G'oyalarni Topish", type="primary", key="n_btn")
+        
+    with col_n2:
+        st.subheader("AI Tavsiyalari")
+        if find_niche_btn and interests:
+            with st.spinner("Qiziqishlaringiz tahlil qilinmoqda..."):
+                niche_prompt = f"""
+                Foydalanuvchi qiziqishlari: {interests}
+                Ko'nikmalari: {skills}
+                Ajrata oladigan vaqti: {time_available}
+                
+                Quyidagi strukturada tavsiya bering:
+                1. 🎯 **3 ta eng mos YouTube Yo'nalishi (Nisha)** va ularning sababi.
+                2. 💡 **Har bir yo'nalish uchun 3 tadan top video g'oyasi (Jami 9 ta g'oya)**.
+                3. 📈 **Ushbu yo'nalishda auditoriyani jalb qilish bo'yicha qisqa maslahat**.
+                """
+                
+                niche_result = ask_ai(
+                    system_prompt="Siz YouTube kanal strategi va ekspertisiz. O'zbek tilida aniq, tushunarli va motivatsion javob bering.",
+                    user_prompt=niche_prompt
+                )
+                
+                if "[Matn generatsiyasida xatolik]" not in niche_result:
+                    st.success("Tavsiyalar tayyor!")
+                    st.markdown(niche_result)
+                else:
+                    st.error(niche_result)
+        elif find_niche_btn and not interests:
+            st.warning("Iltimos, kamida qiziqishlaringizni kiriting.")
+
+# ==========================================================
+# --- Tab 2: YouTube Ssenariy ---
 # ==========================================================
 with tab_scenario:
     st.header("🎬 Professional Video Ssenariy Yaratish")
@@ -38,28 +97,27 @@ with tab_scenario:
     
     with col1:
         st.subheader("Video Ma'lumotlari")
-        topic = st.text_input("Video mavzusi:", placeholder="Masalan: Sun'iy intellekt tarixi")
+        topic = st.text_input("Video mavzusi:", placeholder="Masalan: Sun'iy intellekt tarixi", key="sc_topic")
         video_type = st.selectbox("Video turi:", [
             "Ma'rifiy (Educational)", 
             "Yangiliklar (News)", 
             "Texno-sharh (Review)", 
             "Motivatsiya", 
             "Vlog"
-        ])
-        duration = st.slider("Taxminiy davomiyligi (daqiqa):", 3, 20, 10)
+        ], key="sc_type")
+        duration = st.slider("Taxminiy davomiyligi (daqiqa):", 3, 20, 10, key="sc_dur")
         
-        generate_btn = st.button("Ssenariy yaratish", type="primary")
+        generate_btn = st.button("Ssenariy yaratish", type="primary", key="sc_btn")
     
     with col2:
         st.subheader("Natija")
         if generate_btn and topic:
             with st.spinner("AI ssenariy ustida ishlamoqda..."):
-                ssenarist = YouTubeSsenarist()
-                full_prompt = ssenarist.generate_prompt(topic, video_type, duration)
+                prompt = f"Mavzu: {topic}\nVideo turi: {video_type}\nDavomiyligi: {duration} daqiqa.\n\nUshbu video uchun batafsil YouTube ssenariysini tayyorlab ber."
                 
                 result = ask_ai(
                     system_prompt="Siz tajribali YouTube ssenaristisiz. O'zbek tilida, jozibali, strukturali ssenariy yozib bering.",
-                    user_prompt=full_prompt
+                    user_prompt=prompt
                 )
                 
                 if "[Matn generatsiyasida xatolik]" not in result:
@@ -71,7 +129,48 @@ with tab_scenario:
             st.warning("Iltimos, video mavzusini kiriting.")
 
 # ==========================================================
-# --- Tab 2: Logo & Banner Generator ---
+# --- Tab 3: SEO & Metadata ---
+# ==========================================================
+with tab_seo:
+    st.header("🏷️ YouTube SEO va Optimizatsiya")
+    st.markdown("Videongiz ko'proq ko'rilishi uchun optimal sarlavha, tavsif, teglar va xeshteglar yarating.")
+    
+    col_seo1, col_seo2 = st.columns([1, 2])
+    
+    with col_seo1:
+        st.subheader("Video haqida")
+        seo_topic = st.text_input("Video mavzusi yoki qisqacha mazmuni:", placeholder="Masalan: Python dasturlashni 0 dan o'rganish", key="seo_topic")
+        seo_btn = st.button("SEO elementlarini yaratish", type="primary", key="seo_btn")
+        
+    with col_seo2:
+        st.subheader("SEO Natijalari")
+        if seo_btn and seo_topic:
+            with st.spinner("SEO optimizatsiya tayyorlanmoqda..."):
+                seo_prompt = f"""
+                Mavzu: {seo_topic}
+                
+                Quyidagi formatda YouTube video uchun optimizatsiya qilingan ma'lumotlarni chiqarib ber:
+                1. 🎯 **5 ta CTRi yuqori Sarlavha (Title Variantlari)**
+                2. 📝 **Professional Video Tavsifi (Description)**
+                3. 🏷️ **Teglar (Tags)** - vergul bilan ajratilgan holda
+                4. 📌 **Top 5 Xeshteglar (#Hashtags)**
+                """
+                
+                seo_result = ask_ai(
+                    system_prompt="Siz YouTube SEO bo'yicha mutaxassisiz. O'zbek tilida video algoritmlarga mos SEO matnlarni tayyorlang.",
+                    user_prompt=seo_prompt
+                )
+                
+                if "[Matn generatsiyasida xatolik]" not in seo_result:
+                    st.success("SEO paket tayyor!")
+                    st.markdown(seo_result)
+                else:
+                    st.error(seo_result)
+        elif seo_btn and not seo_topic:
+            st.warning("Iltimos, video mavzusini kiriting.")
+
+# ==========================================================
+# --- Tab 4: Logo & Banner Generator ---
 # ==========================================================
 with tab_visual:
     st.header("🖼️ YouTube Kanalingiz uchun Vizual Kontent")
@@ -122,7 +221,7 @@ with tab_visual:
             st.warning("Iltimos, rasm tavsifini yozing.")
 
 # ==========================================================
-# --- Tab 3: AI Maslahatchi (Chat) ---
+# --- Tab 5: AI Maslahatchi (Chat) ---
 # ==========================================================
 with tab_chat:
     st.header("💬 Ulusama AI bilan Gaplashish")
