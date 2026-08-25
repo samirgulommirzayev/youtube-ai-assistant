@@ -1,4 +1,8 @@
+import os
+import urllib.parse
 import streamlit as st
+from google import genai
+from openai import OpenAI
 
 # 1. Page Configuration
 st.set_page_config(
@@ -32,7 +36,17 @@ if not st.session_state.logged_in:
                 st.error("Parol noto'g'ri!")
     st.stop()
 
-# 3. CSS Stilizatsiya
+# 3. API Klientlarini sozlash
+gemini_key = os.environ.get("GEMINI_API_KEY")
+openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+
+gemini_client = genai.Client(api_key=gemini_key) if gemini_key else None
+openrouter_client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=openrouter_key
+) if openrouter_key else None
+
+# 4. CSS Stilizatsiya
 st.markdown("""
 <style>
     .stApp { background-color: #0E1117; }
@@ -75,25 +89,54 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 4. Sidebar
+# 5. Sidebar & Model Tanlash
 st.sidebar.title("🤖 Ulusama AI")
 st.sidebar.markdown("**Muallif:** Samir Gulommirzoyev")
 st.sidebar.success(f"Xush kelibsiz, **{st.session_state.user_name}**!")
+
+selected_model = st.sidebar.selectbox(
+    "🧠 AI Modelini tanlang:",
+    options=[
+        "Gemini 2.5 Flash (Google)",
+        "ChatGPT (GPT-4o Mini)",
+        "Claude 3.5 Sonnet (Anthropic)"
+    ]
+)
 
 if st.sidebar.button("Chiqish (Logout)"):
     st.session_state.logged_in = False
     st.rerun()
 
-st.sidebar.info("Bu AI agent orqali siz YouTube kanalingizni professional darajada boshqara olasiz.")
+# AI ga matnli so'rov yuborish funksiyasi
+def ask_ai(prompt):
+    if "Gemini" in selected_model:
+        if not gemini_client:
+            return "❌ GEMINI_API_KEY topilmadi!"
+        res = gemini_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        return res.text
+    else:
+        if not openrouter_client:
+            return "❌ OPENROUTER_API_KEY topilmadi!"
+        
+        model_name = "openai/gpt-4o-mini" if "ChatGPT" in selected_model else "anthropic/claude-3.5-sonnet"
+        
+        res = openrouter_client.chat.completions.create(
+            model=model_name,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return res.choices[0].message.content
 
-# 5. Asosiy Interfeys va Tablar
+# 6. Asosiy Interfeys va Tablar
 st.title("🚀 Ulusama AI — To'liq YouTube Agent")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "💡 Nisha & G'oya", 
     "🎬 YouTube Ssenariy", 
     "🏷️ SEO & Metadata", 
-    "🖼️ Logo & Banner", 
+    "🖼️ Logo & Banner Generator", 
     "📈 AI Strateg"
 ])
 
@@ -105,23 +148,24 @@ with tab1:
         "Haftasiga YouTube uchun qancha vaqt ajrata olasiz?",
         ["2-3 soat (Yengil / Shorts)", "3-10 soat (Standard Videolar)", "10+ soat (Professional / Chuqur Videolar)"]
     )
-    talant = st.text_input("Qanday talantingiz bor? (Ixtiyoriy):", placeholder="masalan: Chiroyli gapirish, montaj, rasm chizish...")
+    talant = st.text_input("Qanday talantingiz bor? (Ixtiyoriy):", placeholder="masalan: Chiroyli gapirish, montaj...")
     
     if st.button("G'oyalarni Generatsiya Qilish", key="tab1_btn"):
         if not qiziqish.strip():
             st.warning("Iltimos, avval qiziqishlaringizni kiriting!")
         else:
-            st.success("Tahlil yakunlandi!")
-            st.markdown(f"""
-            ### 🎯 Siz uchun tavsiya etilgan strategiya:
-            * **Qiziqish:** {qiziqish}
-            * **Ajratilgan vaqt:** {vaqt}
-            * **Talant:** {talant if talant.strip() else 'Kiritilmadi'}
-
-            **💡 Tavsiya etiladigan video yo'nalishlari:**
-            1. **Format:** {qiziqish} sohasida eng ko'p beriladigan savollarga javob beruvchi Shorts va haftalik blog.
-            2. **Konsept:** {talant if talant.strip() else qiziqish} mahoratidan foydalanib amaliy darsliklar zanjirini yaratish.
-            """)
+            with st.spinner(f"{selected_model} tahlil qilmoqda..."):
+                prompt = f"""
+                Foydalanuvchi ma'lumotlari:
+                - Qiziqqan sohasi: {qiziqish}
+                - Ajrata oladigan vaqti: {vaqt}
+                - Qobiliyati/Talanti: {talant if talant.strip() else 'Kiritilmadi'}
+                
+                Ushbu foydalanuvchi uchun YouTube'da muvaffaqiyat qozonishi mumkin bo'lgan 3 ta aniq video nishasi va 5 ta qiziqarli video g'oyasini o'zbek tilida ber.
+                """
+                javob = ask_ai(prompt)
+                st.success("Tahlil yakunlandi!")
+                st.markdown(javob)
 
 # 2-TAB: YouTube Ssenariy
 with tab2:
@@ -137,16 +181,22 @@ with tab2:
         if not mavzu.strip() or not nisha_2.strip():
             st.warning("Iltimos, video mavzusi va nishasini kiriting!")
         else:
-            st.success(f"{davomiylik}lik video uchun ssenariy strukturasi:")
-            st.markdown(f"""
-            **Mavzu:** {mavzu} | **Nisha:** {nisha_2}
-            
-            ---
-            * **[00:00 - 00:15] HOOK (E'tiborni tortish):** "Bilarmidingiz? ..." iborasi bilan tomoshabinni ushlab qolish.
-            * **[00:15 - 01:00] KIRISH:** Mavzuning nega muhimligi va videoda nimalar ko'rsatilishi haqida qisqacha.
-            * **[ASOSIY QISM]:** {mavzu} bo'yicha 3 ta eng muhim fakt va misollar tahlili.
-            * **[CHAQIRIQLAR (CTA)]:** Kanalga obuna bo'lish va izoh qoldirishni so'rash.
-            """)
+            with st.spinner(f"{selected_model} ssenariy yozmoqda..."):
+                prompt = f"""
+                Mavzu: {mavzu}
+                Nisha: {nisha_2}
+                Vaqt: {davomiylik}
+                
+                Ushbu video uchun professional YouTube ssenariysini tayyorlab ber (O'zbek tilida). 
+                Struktura:
+                - Hook (Dastlabki 10 soniya)
+                - Kirish
+                - Asosiy qism (Faktlar va tavsiyalar)
+                - Call to Action (Obuna bo'lishga chaqiriq)
+                """
+                javob = ask_ai(prompt)
+                st.success("Ssenariy tayyor!")
+                st.markdown(javob)
 
 # 3-TAB: SEO & Metadata
 with tab3:
@@ -158,31 +208,49 @@ with tab3:
         if not video_nomi.strip() or not nisha_3.strip():
             st.warning("Iltimos, video nomi va yo'nalishini kiriting!")
         else:
-            st.success("SEO Ma'lumotlar Tayyor!")
-            st.markdown(f"""
-            **📌 Optimal Video Nomi:** 
-            `{video_nomi} | Top Qurollar ({nisha_3})`
+            with st.spinner(f"{selected_model} SEO tayyorlamoqda..."):
+                prompt = f"""
+                Video Nomi: {video_nomi}
+                Nisha: {nisha_3}
+                
+                Ushbu video uchun:
+                1. 3 ta eng jozibador YouTube sarlavha variantlari.
+                2. SEO kalit so'zlar (Tags) ro'yxati (vergul bilan ajratilgan).
+                3. Algoritmga mos YouTube Description (Tavsif) matni.
+                """
+                javob = ask_ai(prompt)
+                st.success("SEO Ma'lumotlar Tayyor!")
+                st.markdown(javob)
 
-            **🏷️ Top Kalit So'zlar (Tags):**
-            `{video_nomi}, {nisha_3}, uzbek youtube, foydali ai, texnologiyalar, yangi dasturlar`
-
-            **📝 Video Tavsifi (Description):**
-            Ushbu videoda biz {nisha_3} sohasidagi eng dolzarb ma'lumotlar va {video_nomi} haqida batafsil gaplashamiz. Videoni oxirigacha tomosha qiling va o'z fikringizni izohda qoldiring!
-            """)
-
-# 4-TAB: Logo & Banner
+# 4-TAB: Logo & Banner (Rasm Generatsiyasi bilan)
 with tab4:
-    st.header("🖼️ Logo va Banner Generatori")
+    st.header("🖼️ AI Logo va Banner Generatori")
     kanal_nomi = st.text_input("Kanal nomini kiriting:", placeholder="masalan: Ulusama Tech")
-    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: O'yin / Gaming")
+    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: Gaming / Gaming News")
     
-    if st.button("Dizayn Promptlarini Yaratish", key="tab4_btn"):
+    if st.button("Logo va Banner Yaratish", key="tab4_btn"):
         if not kanal_nomi.strip() or not nisha_4.strip():
             st.warning("Iltimos, kanal nomi va yo'nalishini kiriting!")
         else:
-            st.success("Midjourney / DALL-E uchun tayyor promptlar:")
-            st.code(f"Logo Prompt: A modern vector logo for YouTube channel '{kanal_nomi}', {nisha_4} theme, neon colors, minimalist design, dark background, 8k --v 6.0", language="text")
-            st.code(f"Banner Prompt: Futuristic YouTube channel banner for '{kanal_nomi}', {nisha_4} style, high quality render, 16:9 ratio, sleek dynamic elements --ar 16:9", language="text")
+            with st.spinner("AI Logo va Banner rasmlarini generatsiya qilmoqda..."):
+                # URL uchun xavfsiz prompt tayyorlash
+                logo_prompt = urllib.parse.quote(f"modern vector logo for youtube channel {kanal_nomi}, {nisha_4} theme, professional design, 8k")
+                banner_prompt = urllib.parse.quote(f"futuristic youtube channel banner for {kanal_nomi}, {nisha_4} style, high resolution, wide banner")
+                
+                logo_url = f"https://image.pollinations.ai/prompt/{logo_prompt}?width=512&height=512&nologo=true"
+                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?width=1280&height=720&nologo=true"
+                
+                st.success("Rasmlar tayyor bo'ldi!")
+                
+                col_logo, col_banner = st.columns([1, 2])
+                
+                with col_logo:
+                    st.subheader("🎯 Kanal Logotipi")
+                    st.image(logo_url, caption=f"{kanal_nomi} Logo", use_container_width=True)
+                
+                with col_banner:
+                    st.subheader("🖼️ Kanal Banneri")
+                    st.image(banner_url, caption=f"{kanal_nomi} Banner", use_container_width=True)
 
 # 5-TAB: AI Strateg
 with tab5:
@@ -196,13 +264,13 @@ with tab5:
         goal = st.selectbox("Asosiy maqsadingiz:", ["Monetizatsiya yoqish (1000 sub)", "Tezkor ko'rishlar (Shorts)", "Brend yaratish"])
         
     if st.button("O'sish Strategiyasini Ishlab Chiqish", key="tab5_btn"):
-        st.success("AI Tahlil berdi:")
-        st.markdown(f"""
-        ### 🚀 Sizning bosqichma-bosqich rejangiz:
-        * **Hozirgi holat:** {sub_count} ta obunachi.
-        * **Maqsad:** {goal}.
-        
-        **Tavsiya etiladigan kontent nisbati:**
-        * **70% Shorts:** Auditoriya va yangi obunachilarni jalb qilish uchun.
-        * **30% Uzoq videolar:** Tomosha vaqtini (Watch time) yig'ish va monetizatsiya ochish uchun.
-        """)
+        with st.spinner(f"{selected_model} strategiya tuzmoqda..."):
+            prompt = f"""
+            Hozirgi obunachilar: {sub_count}
+            Maqsad: {goal}
+            
+            Ushbu YouTube kanali tezroq o'sishi uchun 30 kunlik aniq harakatlar rejasini va haftalik kontent rejasini o'zbek tilida tuzib ber.
+            """
+            javob = ask_ai(prompt)
+            st.success("AI Tahlil yakunlandi!")
+            st.markdown(javob)
