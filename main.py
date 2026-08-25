@@ -233,12 +233,12 @@ with tab4:
             st.warning("Iltimos, kanal nomi va yo'nalishini kiriting!")
         else:
             with st.spinner("AI Logo va Banner rasmlarini generatsiya qilmoqda..."):
-                # URL uchun xavfsiz prompt tayyorlash
                 logo_prompt = urllib.parse.quote(f"modern vector logo for youtube channel {kanal_nomi}, {nisha_4} theme, professional design, 8k")
-                banner_prompt = urllib.parse.quote(f"futuristic youtube channel banner for {kanal_nomi}, {nisha_4} style, high resolution, wide banner")
+                banner_prompt = urllib.parse.quote(f"youtube banner for {kanal_nomi}, {nisha_4} theme, colorful artwork, high quality")
                 
+                # O'lchamlarni barqaror standartga o'tkazamiz
                 logo_url = f"https://image.pollinations.ai/prompt/{logo_prompt}?width=512&height=512&nologo=true"
-                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?width=1280&height=720&nologo=true"
+                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?width=1024&height=576&nologo=true"
                 
                 st.success("Rasmlar tayyor bo'ldi!")
                 
