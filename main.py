@@ -7,9 +7,9 @@ from core.content_generator import (
 )
 from core.channel_coach import build_growth_roadmap, analyze_channel_gap
 
-st.set_page_config(page_title="YouTube AI Assistant", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="Ulusama AI", page_icon="🎬", layout="wide")
 
-st.title("🎬 YouTube AI Assistant")
+st.title("🎬Ulusama AI — YouTube Yordamchisi")
 st.caption("Amerika auditoriyasi uchun kanal boshqaruv yordamchisi")
 
 # Yon menyu (Sidebar)
