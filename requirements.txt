@@ -2,3 +2,5 @@ streamlit
 google-genai
 python-dotenv
 rich
+# yangi kutubxona:
+Pillow

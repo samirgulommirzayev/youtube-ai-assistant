@@ -1,117 +1,153 @@
 import streamlit as st
-from core.content_generator import (
-    generate_script,
-    generate_title_tags_hashtags,
-    generate_hooks,
-    critique_video,
-)
-from core.channel_coach import build_growth_roadmap, analyze_channel_gap
+from core.ai_client import ask_ai, generate_image
+from core.content_generator import YouTubeSsenarist
 
-st.set_page_config(page_title="Ulusama AI", page_icon="🎬", layout="wide")
+# --- 0. Konfiguratsiya ---
+MUALLIF_ISMI = "Samir Gulommirzoyev"
 
-st.title("🎬Ulusama AI — YouTube Yordamchisi")
-st.caption("Amerika auditoriyasi uchun kanal boshqaruv yordamchisi")
-
-# Yon menyu (Sidebar)
-st.sidebar.header("📌 Menyu")
-choice = st.sidebar.radio(
-    "Xizmatni tanlang:",
-    [
-        "1. Ssenariy (script) yaratish",
-        "2. Sarlavha + Teg + Hashteg yaratish",
-        "3. Hook variantlari yaratish",
-        "4. Videomni tahlil qilish",
-        "5. 0 dan monetizatsiyaga olib chiqish rejasi",
-        "6. Kanal tahlili"
-    ]
+st.set_page_config(
+    page_title=f"Ulusama AI by {MUALLIF_ISMI}",
+    page_icon="🤖",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 1. Ssenariy yaratish
-if choice.startswith("1"):
-    st.subheader("📝 Ssenariy (script) yaratish")
-    niche = st.text_input("Niche (masalan: Roblox story):")
-    topic = st.text_input("Video mavzusi/g'oyasi:")
-    length = st.number_input("Video uzunligi (soniya):", min_value=5, value=30, step=5)
+# --- Sidebar (Yon panel) ---
+with st.sidebar:
+    st.title("🤖 Ulusama AI")
+    st.subheader(f"Muallif: {MUALLIF_ISMI}")
+    st.markdown("---")
+    st.info("Bu AI agent orqali siz YouTube kanalingizni professional darajada boshqara olasiz.")
 
-    if st.button("Ssenariy yaratish", type="primary"):
-        if niche and topic:
-            with st.spinner("Ssenariy tayyorlanmoqda..."):
-                result = generate_script(niche, topic, int(length))
-                st.success("Tayyor!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, Niche va Mavzuni kiriting!")
+# --- Asosiy Oyna Sarlavhasi ---
+st.title("🚀 Ulusama AI — To'liq YouTube Agent")
 
-# 2. Sarlavha + Teg + Hashteg
-elif choice.startswith("2"):
-    st.subheader("🏷️ Sarlavha + Teg + Hashteg yaratish")
-    niche = st.text_input("Niche:")
-    topic = st.text_input("Video mavzusi:")
+# --- 1. Tablarni yaratish ---
+tab_scenario, tab_visual, tab_chat = st.tabs([
+    "🎬 YouTube Ssenariy", 
+    "🖼️ Logo & Banner Generator", 
+    "💬 AI Maslahatchi (Chat)"
+])
 
-    if st.button("Generatsiya qilish", type="primary"):
-        if niche and topic:
-            with st.spinner("Natijalar yaratilmoqda..."):
-                result = generate_title_tags_hashtags(niche, topic)
-                st.success("Tayyor!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, barcha maydonlarni to'ldiring!")
+# ==========================================================
+# --- Tab 1: YouTube Ssenariy ---
+# ==========================================================
+with tab_scenario:
+    st.header("🎬 Professional Video Ssenariy Yaratish")
+    
+    col1, col2 = st.columns([1, 2])
+    
+    with col1:
+        st.subheader("Video Ma'lumotlari")
+        topic = st.text_input("Video mavzusi:", placeholder="Masalan: Sun'iy intellekt tarixi")
+        video_type = st.selectbox("Video turi:", [
+            "Ma'rifiy (Educational)", 
+            "Yangiliklar (News)", 
+            "Texno-sharh (Review)", 
+            "Motivatsiya", 
+            "Vlog"
+        ])
+        duration = st.slider("Taxminiy davomiyligi (daqiqa):", 3, 20, 10)
+        
+        generate_btn = st.button("Ssenariy yaratish", type="primary")
+    
+    with col2:
+        st.subheader("Natija")
+        if generate_btn and topic:
+            with st.spinner("AI ssenariy ustida ishlamoqda..."):
+                ssenarist = YouTubeSsenarist()
+                full_prompt = ssenarist.generate_prompt(topic, video_type, duration)
+                
+                result = ask_ai(
+                    system_prompt="Siz tajribali YouTube ssenaristisiz. O'zbek tilida, jozibali, strukturali ssenariy yozib bering.",
+                    user_prompt=full_prompt
+                )
+                
+                if "[Matn generatsiyasida xatolik]" not in result:
+                    st.success("Ssenariy tayyor!")
+                    st.markdown(result)
+                else:
+                    st.error(result)
+        elif generate_btn and not topic:
+            st.warning("Iltimos, video mavzusini kiriting.")
 
-# 3. Hook variantlari
-elif choice.startswith("3"):
-    st.subheader("🪝 Hook variantlari yaratish")
-    niche = st.text_input("Niche:")
-    topic = st.text_input("Video mavzusi:")
+# ==========================================================
+# --- Tab 2: Logo & Banner Generator ---
+# ==========================================================
+with tab_visual:
+    st.header("🖼️ YouTube Kanalingiz uchun Vizual Kontent")
+    st.markdown("YouTube kanalingiz uchun original logo yoki video banner yarating.")
+    
+    col_v1, col_v2 = st.columns([1, 2])
+    
+    with col_v1:
+        st.subheader("Vizual Sozlamalar")
+        visual_type = st.radio("Nima yaratamiz?", ["Kanal Logosi (Square)", "Video Banner (Widescreen 16:9)"])
+        
+        raw_prompt = st.text_area(
+            "Rasm tavsifi (Prompt):", 
+            height=150,
+            placeholder="Masalan: Kosmosda suzayotgan robot boshi, neon ranglar, futuristik, yuqori sifat, raqamli san'at."
+        )
+        
+        st.caption("Maslahat: Prompt qanchalik batafsil bo'lsa (ranglar, stil, obyektlar), rasm shunchalik yaxshi chiqadi.")
+        generate_image_btn = st.button("Vizualni Yaratish", key="gen_img", type="primary")
+    
+    with col_v2:
+        st.subheader("Natija")
+        if generate_image_btn and raw_prompt:
+            enriched_prompt = ask_ai(
+                system_prompt="Siz professional Imagen rasm generatori promptsiz. Foydalanuvchining o'zbek tilidagi qisqa promptini, Imagen 3 modeli tushunadigan, batafsil, stil, yorug'lik va obyektlar kiritilgan Ingliz tilidagi professional promptga aylantiring. Faqat boyitilgan Inglizcha promptni qaytaring.",
+                user_prompt=raw_prompt,
+                max_tokens=200
+            )
+            
+            st.caption(f"AI tomonidan boyitilgan prompt (Inglizcha): *{enriched_prompt}*")
 
-    if st.button("Hooklarni yaratish", type="primary"):
-        if niche and topic:
-            with st.spinner("Hooklar oylashtirilmoqda..."):
-                result = generate_hooks(niche, topic)
-                st.success("Tayyor!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, barcha maydonlarni to'ldiring!")
+            with st.spinner("AI rasm chizmoqda... (bu 10-20 soniya olishi mumkin)"):
+                image_bytes = generate_image(enriched_prompt)
+                
+                if image_bytes:
+                    st.success("Rasm muvaffaqiyatli yaratildi!")
+                    st.image(image_bytes, caption=f"Yaratilgan {visual_type}", use_column_width=True)
+                    
+                    st.download_button(
+                        label="Rasmni yuklab olish",
+                        data=image_bytes,
+                        file_name=f"ulusama_ai_{visual_type.lower().replace(' ', '_')}.png",
+                        mime="image/png"
+                    )
+                else:
+                    st.error("Rasm yaratishda xatolik yuz berdi yoki API rasm qaytarmadi. Promptni soddalashtirib ko'ring.")
+        elif generate_image_btn and not raw_prompt:
+            st.warning("Iltimos, rasm tavsifini yozing.")
 
-# 4. Video tahlili
-elif choice.startswith("4"):
-    st.subheader("🔍 Videomni tahlil qilish (nima yetishmayapti)")
-    desc = st.text_area("Videongiz haqida yozing (nima bo'layapti, retention, hook):")
+# ==========================================================
+# --- Tab 3: AI Maslahatchi (Chat) ---
+# ==========================================================
+with tab_chat:
+    st.header("💬 Ulusama AI bilan Gaplashish")
+    st.markdown("YouTube kanalingizni rivojlantirish, g'oyalar, algoritmlar yoki umumiy maslahatlar bo'yicha AI bilan erkin muloqot qiling.")
 
-    if st.button("Tahlil qilish", type="primary"):
-        if desc:
-            with st.spinner("Video tahlil qilinmoqda..."):
-                result = critique_video(desc)
-                st.success("Tahlil yakunlandi!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, video haqida ma'lumot kiriting!")
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-# 5. O'sish rejasi
-elif choice.startswith("5"):
-    st.subheader("🚀 Kanalni 0 dan monetizatsiyaga olib chiqish rejasi")
-    niche = st.text_input("Niche:")
-    subs = st.number_input("Hozirgi obunachilar soni:", min_value=0, value=0, step=10)
-    status = st.text_area("Hozirgi holat (nechta video, qanday natija):")
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    if st.button("Reja tuzish", type="primary"):
-        if niche and status:
-            with st.spinner("O'sish rejasi tuzilmoqda..."):
-                result = build_growth_roadmap(niche, int(subs), status)
-                st.success("Reja tayyor!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, Niche va Hozirgi holatni kiriting!")
+    if prompt := st.chat_input("YouTube haqida nimani bilmoqchisiz?"):
+        with st.chat_message("user"):
+            st.markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
 
-# 6. Kanal tahlili
-elif choice.startswith("6"):
-    st.subheader("📊 Kanal tahlili (qo'lda ma'lumot kiritib)")
-    desc = st.text_area("Kanal haqida ma'lumot (nomi, niche, obunachilar, videolar):")
-
-    if st.button("Kanalni tahlil qilish", type="primary"):
-        if desc:
-            with st.spinner("Kanal tahlil qilinmoqda..."):
-                result = analyze_channel_gap(desc)
-                st.success("Tahlil tayyor!")
-                st.markdown(result)
-        else:
-            st.warning("Iltimos, kanal haqida ma'lumot kiriting!")
+        with st.chat_message("assistant"):
+            with st.spinner("Ulusama o'ylamoqda..."):
+                chat_result = ask_ai(
+                    system_prompt=f"Siz Ulusama AI — professional YouTube maslahatchisisiz. Muallif {MUALLIF_ISMI} ga YouTube algoritmlari, kontent yaratish, monetizatsiya va kanal rivojlantirish bo'yicha foydali maslahatlar bering. O'zbek tilida, do'stona va professional tonda gapiring. Agarda savol YouTube'ga aloqador bo'lmasa, do'stona tarzda mavzuga qaytishni so'rang.",
+                    user_prompt=prompt,
+                    max_tokens=2000
+                )
+                st.markdown(chat_result)
+        
+        st.session_state.messages.append({"role": "assistant", "content": chat_result})
