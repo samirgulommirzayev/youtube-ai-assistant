@@ -100,12 +100,12 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 # 1-TAB: Nisha & G'oya
 with tab1:
     st.header("💡 Nisha va Video G'oyalar Yaratish")
-    qiziqish = st.text_input("1. Qaysi sohalarga qiziqasiz? (Majburiy):", placeholder="masalan: IT, futbol, pazandachilik...")
+    qiziqish = st.text_input("Qaysi sohalarga qiziqasiz? (Majburiy):", placeholder="masalan: IT, futbol, pazandachilik...")
     vaqt = st.selectbox(
-        "2. Haftasiga YouTube uchun qancha vaqt ajrata olasiz?",
+        "Haftasiga YouTube uchun qancha vaqt ajrata olasiz?",
         ["2-3 soat (Yengil / Shorts)", "3-10 soat (Standard Videolar)", "10+ soat (Professional / Chuqur Videolar)"]
     )
-    talant = st.text_input("3. Qanday maxsus talant yoki ko'nikmalaringiz bor? (Ixtiyoriy):", placeholder="masalan: Chiroyli gapirish, montaj qilish, rasm chizish...")
+    talant = st.text_input("Qanday talantingiz bor? (Ixtiyoriy):", placeholder="masalan: Chiroyli gapirish, montaj, rasm chizish...")
     
     if st.button("G'oyalarni Generatsiya Qilish", key="tab1_btn"):
         if not qiziqish.strip():
@@ -116,26 +116,26 @@ with tab1:
             ### 🎯 Siz uchun tavsiya etilgan strategiya:
             * **Qiziqish:** {qiziqish}
             * **Ajratilgan vaqt:** {vaqt}
-            * **Talant/Ko'nikma:** {talant if talant else 'Koʻrsatilmadi'}
+            * **Talant:** {talant if talant.strip() else 'Kiritilmadi'}
 
-            **Tavsiya etiladigan video yo'nalishi:**
-            1. **Qisqa format (Shorts):** {qiziqish} sohasida eng ko'p beriladigan 5 ta savolga javob.
-            2. **Asosiy video:** {talant if talant else qiziqish} orqali nimalarga erishish mumkinligi haqida bosqichma-bosqich qo'llanma.
+            **💡 Tavsiya etiladigan video yo'nalishlari:**
+            1. **Format:** {qiziqish} sohasida eng ko'p beriladigan savollarga javob beruvchi Shorts va haftalik blog.
+            2. **Konsept:** {talant if talant.strip() else qiziqish} mahoratidan foydalanib amaliy darsliklar zanjirini yaratish.
             """)
 
 # 2-TAB: YouTube Ssenariy
 with tab2:
     st.header("🎬 Professional Video Ssenariy")
-    mavzu = st.text_input("1. Video mavzusi nima?", placeholder="masalan: Sun'iy intellekt kelajakda ish o'rinlarini egallaydimi?")
-    nisha_2 = st.text_input("2. Kanalingiz nishasi (yo'nalishi) qanaqa?", placeholder="masalan: Texnologiya")
+    mavzu = st.text_input("Video mavzusi:", placeholder="masalan: Sun'iy intellekt kelajakda ish o'rinlarini egallaydimi?")
+    nisha_2 = st.text_input("Nishasi qanaqa (yo'nalishi)?", placeholder="masalan: Texnologiya")
     davomiylik = st.select_slider(
-        "3. Ssenariy qancha vaqtlik video uchun mo'ljallangan bo'lsin?",
+        "Qancha vaqtga mos ssenariy bo'lishi kerak?",
         options=["60 soniya (Shorts)", "3-5 daqiqa", "8-10 daqiqa", "15+ daqiqa"]
     )
     
     if st.button("Ssenariy Yozish", key="tab2_btn"):
         if not mavzu.strip() or not nisha_2.strip():
-            st.warning("Iltimos, video mavzusi va nishani kiriting!")
+            st.warning("Iltimos, video mavzusi va nishasini kiriting!")
         else:
             st.success(f"{davomiylik}lik video uchun ssenariy strukturasi:")
             st.markdown(f"""
@@ -151,8 +151,8 @@ with tab2:
 # 3-TAB: SEO & Metadata
 with tab3:
     st.header("🏷️ SEO & Metadata Optimizatsiya")
-    video_nomi = st.text_input("1. Video nomini kiriting:", placeholder="masalan: 10 ta eng yaxshi AI dasturlar")
-    nisha_3 = st.text_input("2. Video yo'nalishi (nishasi):", placeholder="masalan: Texnologiya va Dasturlash")
+    video_nomi = st.text_input("Video nomini kiriting:", placeholder="masalan: 10 ta eng yaxshi AI dasturlar")
+    nisha_3 = st.text_input("Yo'nalishini (nishasini) kiriting:", placeholder="masalan: Texnologiya")
     
     if st.button("SEO Tag va Tavsiflarni Olish", key="tab3_btn"):
         if not video_nomi.strip() or not nisha_3.strip():
@@ -173,8 +173,8 @@ with tab3:
 # 4-TAB: Logo & Banner
 with tab4:
     st.header("🖼️ Logo va Banner Generatori")
-    kanal_nomi = st.text_input("1. Kanalingiz nomini kiriting:", placeholder="masalan: Ulusama Tech")
-    nisha_4 = st.text_input("2. Kanal yo'nalishini kiriting:", placeholder="masalan: O'yin / Gaming")
+    kanal_nomi = st.text_input("Kanal nomini kiriting:", placeholder="masalan: Ulusama Tech")
+    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: O'yin / Gaming")
     
     if st.button("Dizayn Promptlarini Yaratish", key="tab4_btn"):
         if not kanal_nomi.strip() or not nisha_4.strip():
