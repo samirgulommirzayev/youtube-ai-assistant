@@ -5,3 +5,4 @@ rich
 # yangi kutubxona:
 Pillow
 openai
+aiogram
