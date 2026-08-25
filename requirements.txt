@@ -6,3 +6,4 @@ rich
 Pillow
 openai
 aiogram
+aiohttp
