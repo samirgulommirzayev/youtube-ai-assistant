@@ -4,3 +4,4 @@ python-dotenv
 rich
 # yangi kutubxona:
 Pillow
+openai
