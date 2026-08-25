@@ -4,7 +4,80 @@ from core.ai_client import ask_ai, generate_image
 # --- 0. Konfiguratsiya ---
 MUALLIF_ISMI = "Samir Gulommirzoyev"
 
-st.set_page_config(
+st.set_page_config
+st.markdown("""
+<style>
+    /* Asosiy fon va shriftlar */
+    .stApp {
+        background-color: #0E1117;
+    }
+    
+    /* Sarlavha uchun gradient va neon effekt */
+    h1 {
+        background: linear-gradient(90deg, #FF0055 0%, #7A00FF 50%, #00E5FF 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800 !important;
+        font-size: 2.8rem !important;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    /* Tab tugmalarini stilizatsiya qilish */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+        background-color: #161B22;
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid #30363D;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 45px;
+        border-radius: 8px;
+        color: #8B949E;
+        font-weight: 600;
+    }
+
+    .stTabs [aria-selected="true"] {
+        background: linear-gradient(135deg, #FF0055, #7A00FF) !important;
+        color: #FFFFFF !important;
+    }
+    
+    /* Input va Textarea oynalari */
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea {
+        background-color: #161B22 !important;
+        color: #F0F6FC !important;
+        border-radius: 10px !important;
+        border: 1px solid #30363D !important;
+    }
+
+    /* Barcha tugmalar uchun premium stil */
+    .stButton>button {
+        width: 100%;
+        background: linear-gradient(90deg, #FF0055, #7A00FF);
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 0, 85, 0.3);
+    }
+
+    .stButton>button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(122, 0, 255, 0.5);
+    }
+
+    /* Sidebar dizayni */
+    section[data-testid="stSidebar"] {
+        background-color: #161B22;
+        border-right: 1px solid #30363D;
+    }
+</style>
+""", unsafe_allow_html=True) 
+(
     page_title=f"Ulusama AI by {MUALLIF_ISMI}",
     page_icon="🤖",
     layout="wide",
