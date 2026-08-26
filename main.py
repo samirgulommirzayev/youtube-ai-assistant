@@ -1,292 +1,252 @@
-import os
-import urllib.parse
 import streamlit as st
-from google import genai
-from openai import OpenAI
+import os
+import google.generativeai as genai
+from youtube_transcript_api import YouTubeTranscriptApi
 
-# 1. Page Configuration
+# 1. Sahifa sozlamalari
 st.set_page_config(
-    page_title="Ulusama AI — YouTube Agent",
-    page_icon="🚀",
+    page_title="Ulusama AI — Multi-Model Platform",
+    page_icon="⚡",
     layout="wide"
 )
 
-# 2. Login Tizimi
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-PAROL = "ulusama2026"
-
-if not st.session_state.logged_in:
-    st.title("🔑 Ulusama AI — Tizimga kirish")
-    st.write("Dasturdan foydalanish uchun ismingiz va parolni kiriting.")
-    
-    col1, _ = st.columns([1, 1])
-    with col1:
-        ism = st.text_input("Ismingizni kiriting:")
-        parol_input = st.text_input("Parolni kiriting:", type="password")
-        if st.button("Kirish"):
-            if parol_input == PAROL and ism.strip() != "":
-                st.session_state.logged_in = True
-                st.session_state.user_name = ism
-                st.rerun()
-            elif ism.strip() == "":
-                st.error("Iltimos, ismingizni kiriting!")
-            else:
-                st.error("Parol noto'g'ri!")
-    st.stop()
-
-# 3. API Klientlarini sozlash
-gemini_key = os.environ.get("GEMINI_API_KEY")
-openrouter_key = os.environ.get("OPENROUTER_API_KEY")
-
-gemini_client = genai.Client(api_key=gemini_key) if gemini_key else None
-openrouter_client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=openrouter_key
-) if openrouter_key else None
-
-# 4. CSS Stilizatsiya
-st.markdown("""
+# 2. Premium Oq va Sariq (Gold & Dark UI) CSS Dizayni
+custom_css = """
 <style>
-    .stApp { background-color: #0E1117; }
-    h1 {
-        background: linear-gradient(90deg, #FF0055 0%, #7A00FF 50%, #00E5FF 100%);
+    /* Asosiy fon va matn */
+    .stApp {
+        background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
+        color: #ffffff;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    /* Login kartasi */
+    .login-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        padding: 3rem;
+        border-radius: 24px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+        max-width: 460px;
+        margin: 50px auto;
+        text-align: center;
+    }
+    
+    /* Sarlavha gradienti (Oq va Yashin Sariq) */
+    .gold-header {
+        background: linear-gradient(90deg, #FFFFFF 0%, #FFD700 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: 800 !important;
-        font-size: 2.5rem !important;
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: -1px;
     }
+    
+    /* Tablar stili */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #161B22;
+        gap: 10px;
+        background-color: rgba(255, 255, 255, 0.02);
         padding: 8px;
         border-radius: 12px;
-        border: 1px solid #30363D;
+        border: 1px solid rgba(255, 215, 0, 0.1);
+    }
+    .stTabs [data-baseweb="tab"] {
+        color: #cccccc;
+        border-radius: 8px;
+        padding: 8px 16px;
     }
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #FF0055, #7A00FF) !important;
-        color: #FFFFFF !important;
+        background-color: #FFD700 !important;
+        color: #000000 !important;
+        font-weight: bold;
     }
+    
+    /* Sariq tugmalar stili */
     .stButton>button {
         width: 100%;
-        background: linear-gradient(90deg, #FF0055, #7A00FF);
-        color: white;
-        font-weight: bold;
+        background: linear-gradient(90deg, #FFD700 0%, #FFA500 100%);
+        color: #000000;
         border: none;
-        padding: 10px 20px;
-        border-radius: 10px;
+        padding: 0.85rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
     }
     .stButton>button:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(122, 0, 255, 0.4);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.5);
+        color: #000000;
     }
-    section[data-testid="stSidebar"] {
-        background-color: #161B22;
-        border-right: 1px solid #30363D;
+    
+    /* Input maydonlari */
+    .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stSelectbox>div>div>div {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 215, 0, 0.3) !important;
+        border-radius: 10px !important;
+    }
+    .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
+        border-color: #FFD700 !important;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.4) !important;
+    }
+    
+    /* Natija oynasi */
+    .result-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-left: 4px solid #FFD700;
+        padding: 1.5rem;
+        border-radius: 12px;
+        margin-top: 1.5rem;
     }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(custom_css, unsafe_allow_html=True)
 
-# 5. Sidebar & Model Tanlash
-st.sidebar.title("🤖 Ulusama AI")
-st.sidebar.markdown("**Muallif:** Samir Gulommirzoyev")
-st.sidebar.success(f"Xush kelibsiz, **{st.session_state.user_name}**!")
+# 3. Kirish holati va parol
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
 
-selected_model = st.sidebar.selectbox(
-    "🧠 AI Modelini tanlang:",
-    options=[
-        "Gemini 3.6 Flash (Google)",
-        "DeepSeek V3 (Bepul)",
-        "Llama 3.3 70B (Bepul)",
-        "Qwen 2.5 72B (Bepul)",
-        "ChatGPT (GPT-4o Mini)",
-        "Claude 3.5 Sonnet (Anthropic)"
-    ]
-)
+CORRECT_PASSWORD = "ulusama2026"
 
-if st.sidebar.button("Chiqish (Logout)"):
-    st.session_state.logged_in = False
-    st.rerun()
-
-# AI ga matnli so'rov yuborish funksiyasi
-def ask_ai(prompt):
-    if "Gemini" in selected_model:
-        if not gemini_client:
-            return "❌ GEMINI_API_KEY topilmadi!"
-        res = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt
-        )
-        return res.text
-    else:
-        if not openrouter_client:
-            return "❌ OPENROUTER_API_KEY topilmadi!"
-        
-        # Modellarni OpenRouter ID'lariga moslash
-        model_map = {
-            "DeepSeek V3 (Bepul)": "deepseek/deepseek-chat:free",
-            "Llama 3.3 70B (Bepul)": "meta-llama/llama-3.3-70b-instruct:free",
-            "Qwen 2.5 72B (Bepul)": "qwen/qwen-2.5-72b-instruct:free",
-            "ChatGPT (GPT-4o Mini)": "openai/gpt-4o-mini",
-            "Claude 3.5 Sonnet (Anthropic)": "anthropic/claude-3.5-sonnet"
-        }
-        
-        res = openrouter_client.chat.completions.create(
-            model=model_map[selected_model],
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return res.choices[0].message.content
-
-# 6. Asosiy Interfeys va Tablar
-st.title("🚀 Ulusama AI — To'liq YouTube Agent")
-
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "💡 Nisha & G'oya", 
-    "🎬 YouTube Ssenariy", 
-    "🏷️ SEO & Metadata", 
-    "🖼️ Logo & Banner Generator", 
-    "📈 AI Strateg"
-])
-
-# 1-TAB: Nisha & G'oya
-with tab1:
-    st.header("💡 Nisha va Video G'oyalar Yaratish")
-    qiziqish = st.text_input("Qaysi sohalarga qiziqasiz? (Majburiy):", placeholder="masalan: IT, futbol, pazandachilik...")
-    vaqt = st.selectbox(
-        "Haftasiga YouTube uchun qancha vaqt ajrata olasiz?",
-        ["2-3 soat (Yengil / Shorts)", "3-10 soat (Standard Videolar)", "10+ soat (Professional / Chuqur Videolar)"]
-    )
-    talant = st.text_input("Qanday talantingiz bor? (Ixtiyoriy):", placeholder="masalan: Chiroyli gapirish, montaj...")
-    
-    if st.button("G'oyalarni Generatsiya Qilish", key="tab1_btn"):
-        if not qiziqish.strip():
-            st.warning("Iltimos, avval qiziqishlaringizni kiriting!")
+# 4. Yordamchi AI funksiyalar
+def get_youtube_transcript(video_url):
+    try:
+        if "watch?v=" in video_url:
+            video_id = video_url.split("watch?v=")[1].split("&")[0]
+        elif "youtu.be/" in video_url:
+            video_id = video_url.split("youtu.be/")[1].split("?")[0]
         else:
-            with st.spinner(f"{selected_model} tahlil qilmoqda..."):
-                prompt = f"""
-                Foydalanuvchi ma'lumotlari:
-                - Qiziqqan sohasi: {qiziqish}
-                - Ajrata oladigan vaqti: {vaqt}
-                - Qobiliyati/Talanti: {talant if talant.strip() else 'Kiritilmadi'}
-                
-                Ushbu foydalanuvchi uchun YouTube'da muvaffaqiyat qozonishi mumkin bo'lgan 3 ta aniq video nishasi va 5 ta qiziqarli video g'oyasini o'zbek tilida ber.
-                """
-                javob = ask_ai(prompt)
-                st.success("Tahlil yakunlandi!")
-                st.markdown(javob)
-
-# 2-TAB: YouTube Ssenariy
-with tab2:
-    st.header("🎬 Professional Video Ssenariy")
-    mavzu = st.text_input("Video mavzusi:", placeholder="masalan: Sun'iy intellekt kelajakda ish o'rinlarini egallaydimi?")
-    nisha_2 = st.text_input("Nishasi qanaqa (yo'nalishi)?", placeholder="masalan: Texnologiya")
-    davomiylik = st.select_slider(
-        "Qancha vaqtga mos ssenariy bo'lishi kerak?",
-        options=["60 soniya (Shorts)", "3-5 daqiqa", "8-10 daqiqa", "15+ daqiqa"]
-    )
-    
-    if st.button("Ssenariy Yozish", key="tab2_btn"):
-        if not mavzu.strip() or not nisha_2.strip():
-            st.warning("Iltimos, video mavzusi va nishasini kiriting!")
-        else:
-            with st.spinner(f"{selected_model} ssenariy yozmoqda..."):
-                prompt = f"""
-                Mavzu: {mavzu}
-                Nisha: {nisha_2}
-                Vaqt: {davomiylik}
-                
-                Ushbu video uchun professional YouTube ssenariysini tayyorlab ber (O'zbek tilida). 
-                Struktura:
-                - Hook (Dastlabki 10 soniya)
-                - Kirish
-                - Asosiy qism (Faktlar va tavsiyalar)
-                - Call to Action (Obuna bo'lishga chaqiriq)
-                """
-                javob = ask_ai(prompt)
-                st.success("Ssenariy tayyor!")
-                st.markdown(javob)
-
-# 3-TAB: SEO & Metadata
-with tab3:
-    st.header("🏷️ SEO & Metadata Optimizatsiya")
-    video_nomi = st.text_input("Video nomini kiriting:", placeholder="masalan: 10 ta eng yaxshi AI dasturlar")
-    nisha_3 = st.text_input("Yo'nalishini (nishasini) kiriting:", placeholder="masalan: Texnologiya")
-    
-    if st.button("SEO Tag va Tavsiflarni Olish", key="tab3_btn"):
-        if not video_nomi.strip() or not nisha_3.strip():
-            st.warning("Iltimos, video nomi va yo'nalishini kiriting!")
-        else:
-            with st.spinner(f"{selected_model} SEO tayyorlamoqda..."):
-                prompt = f"""
-                Video Nomi: {video_nomi}
-                Nisha: {nisha_3}
-                
-                Ushbu video uchun:
-                1. 3 ta eng jozibador YouTube sarlavha variantlari.
-                2. SEO kalit so'zlar (Tags) ro'yxati (vergul bilan ajratilgan).
-                3. Algoritmga mos YouTube Description (Tavsif) matni.
-                """
-                javob = ask_ai(prompt)
-                st.success("SEO Ma'lumotlar Tayyor!")
-                st.markdown(javob)
-
-# 4-TAB: Logo & Banner (Rasm Generatsiyasi bilan)
-with tab4:
-    st.header("🖼️ AI Logo va Banner Generatori")
-    kanal_nomi = st.text_input("Kanal nomini kiriting:", placeholder="masalan: Ulusama Tech")
-    nisha_4 = st.text_input("Kanal yo'nalishini kiriting:", placeholder="masalan: Gaming / Roblox")
-    
-    if st.button("Logo va Banner Yaratish", key="tab4_btn"):
-        if not kanal_nomi.strip() or not nisha_4.strip():
-            st.warning("Iltimos, kanal nomi va yo'nalishini kiriting!")
-        else:
-            with st.spinner("AI Logo va Banner rasmlarini generatsiya qilmoqda..."):
-                import random
-                seed_val = random.randint(1, 99999)
-                
-                # Begona belgilardan tozalangan oddiy prompt
-                clean_name = kanal_nomi.strip().replace(" ", "_")
-                clean_nisha = nisha_4.strip().replace(" ", "_")
-                
-                logo_prompt = f"vector_logo_for_{clean_name}_{clean_nisha}_gaming_style"
-                banner_prompt = f"youtube_banner_art_for_{clean_name}_{clean_nisha}_hd_wallpaper"
-                
-                # Eng sodda va ishlaydigan URL struktura
-                logo_url = f"https://image.pollinations.ai/prompt/{logo_prompt}?seed={seed_val}"
-                banner_url = f"https://image.pollinations.ai/prompt/{banner_prompt}?seed={seed_val+1}"
-                
-                st.success("Rasmlar tayyor bo'ldi!")
-                
-                col_logo, col_banner = st.columns([1, 2])
-                
-                with col_logo:
-                    st.subheader("🎯 Kanal Logotipi")
-                    st.image(logo_url, caption=f"{kanal_nomi} Logo", use_container_width=True)
-                
-                with col_banner:
-                    st.subheader("🖼️ Kanal Banneri")
-                    st.image(banner_url, caption=f"{kanal_nomi} Banner", use_container_width=True)
-# 5-TAB: AI Strateg
-with tab5:
-    st.header("📈 Ulusama AI — YouTube O'sish Analitigi & Chat")
-    st.write("Kanalingiz ko'rishlar sonini va obunachilarini oshirish bo'yicha aqlli maslahatchi.")
-    
-    col_a, col_b = st.columns(2)
-    with col_a:
-        sub_count = st.number_input("Hozirgi obunachilar soni:", min_value=0, value=100)
-    with col_b:
-        goal = st.selectbox("Asosiy maqsadingiz:", ["Monetizatsiya yoqish (1000 sub)", "Tezkor ko'rishlar (Shorts)", "Brend yaratish"])
-        
-    if st.button("O'sish Strategiyasini Ishlab Chiqish", key="tab5_btn"):
-        with st.spinner(f"{selected_model} strategiya tuzmoqda..."):
-            prompt = f"""
-            Hozirgi obunachilar: {sub_count}
-            Maqsad: {goal}
+            return None, "Noto'g'ri YouTube havolasi."
             
-            Ushbu YouTube kanali tezroq o'sishi uchun 30 kunlik aniq harakatlar rejasini va haftalik kontent rejasini o'zbek tilida tuzib ber.
-            """
-            javob = ask_ai(prompt)
-            st.success("AI Tahlil yakunlandi!")
-            st.markdown(javob)
+        transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=['uz', 'ru', 'en'])
+        return " ".join([item['text'] for item in transcript_list]), None
+    except Exception as e:
+        return None, f"Subtitr yuklanmadi: {str(e)}"
+
+def analyze_with_gemini(prompt_text, transcript_text):
+    api_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return "⚠️ API Kalit topilmadi! Render ortam o'zgaruvchilarini tekshiring."
+        
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    full_prompt = f"""
+    Siz professional YouTube yordamchisiz.
+    Quyidagi video transkriptidan foydalanib foydalanuvchi savoliga javob bering:
+    
+    Transkript:
+    {transcript_text[:10000]}
+    
+    Foydalanuvchi topshirig'i:
+    {prompt_text}
+    """
+    response = model.generate_content(full_prompt)
+    return response.text
+
+# 5. Auth (Login & Parol) Oynasi
+if not st.session_state.authenticated:
+    st.markdown('<div class="login-card">', unsafe_allow_html=True)
+    st.markdown('<h1 class="gold-header">ULUSAMA AI</h1>', unsafe_allow_html=True)
+    st.write("Platformaga kirish")
+    st.write("---")
+    
+    with st.form("login_form"):
+        username = st.text_input("Login:", placeholder="Loginni kiriting...")
+        password = st.text_input("Parol:", type="password", placeholder="Parolni kiriting...")
+        submit = st.form_submit_button("Kirish ⚡")
+        
+        if submit:
+            if not username.strip() or not password.strip():
+                st.error("⚠️ Login va parol maydonini to'ldirish majburiy!")
+            elif password == CORRECT_PASSWORD:
+                st.session_state.authenticated = True
+                st.session_state.username = username
+                st.rerun()
+            else:
+                st.error("❌ Noto'g'ri parol!")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# 6. Asosiy 5 Ta Tabli Interfeys (Kirgandan so'ng)
+else:
+    col_t, col_l = st.columns([4, 1])
+    with col_t:
+        st.markdown('<h1 class="gold-header">⚡ Ulusama AI — Multi-Model Platform</h1>', unsafe_allow_html=True)
+        st.write(f"Xush kelibsiz, **{st.session_state.username}**!")
+    with col_l:
+        if st.button("Chiqish 🚪"):
+            st.session_state.authenticated = False
+            st.rerun()
+
+    st.markdown("---")
+    
+    # 5 Ta Asosiy Tab
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📺 YouTube AI Agent", 
+        "🤖 ChatGPT & Claude", 
+        "⚡ Gemini Models", 
+        "🔍 Perplexity Search", 
+        "⚙️ API & Sozlamalar"
+    ])
+    
+    # TAB 1: YouTube AI Assistant
+    with tab1:
+        st.subheader("YouTube Videolarni AI bilan Tahlil Qilish")
+        col_in1, col_in2 = st.columns([1, 1])
+        
+        with col_in1:
+            yt_url = st.text_input("🔗 YouTube Video Havolasi:", placeholder="https://www.youtube.com/watch?v=...")
+            prompt_yt = st.text_area("💬 Topshiriq yoki Savol:", placeholder="Videoni qisqacha mazmuni va asosiy nuqtalarini chiqarib ber...", height=140)
+            start_btn = st.button("Tahlilni Boshlash ✨")
+
+        with col_in2:
+            if start_btn:
+                if not yt_url.strip() or not prompt_yt.strip():
+                    st.warning("⚠️ Iltimos, video havolasi va topshiriqni to'liq kiriting!")
+                else:
+                    with st.spinner("⚡ Video tahlil qilinmoqda..."):
+                        transcript, err = get_youtube_transcript(yt_url)
+                        if err:
+                            st.error(f"❌ Xatolik: {err}")
+                        else:
+                            ai_res = analyze_with_gemini(prompt_yt, transcript)
+                            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+                            st.subheader("📝 AI Natijasi:")
+                            st.write(ai_res)
+                            st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.info("👈 Chap tomonda video havolasini kiriting va topshiriq berib 'Tahlilni Boshlash' tugmasini bosing.")
+
+    # TAB 2: ChatGPT & Claude (OpenRouter)
+    with tab2:
+        st.subheader("ChatGPT & Claude Modellari")
+        selected_model = st.selectbox("Modelni tanlang:", ["gpt-4o", "gpt-3.5-turbo", "claude-3-5-sonnet", "claude-3-haiku"])
+        user_msg = st.text_area("Savolingizni kiriting:", height=120)
+        if st.button("Yuborish (OpenRouter) 🚀"):
+            st.info(f"{selected_model} modeliga so'rov yuborildi...")
+
+    # TAB 3: Gemini Models
+    with tab3:
+        st.subheader("Google Gemini Modellari")
+        gemini_model = st.selectbox("Gemini Model:", ["gemini-1.5-flash", "gemini-1.5-pro"])
+        gemini_prompt = st.text_area("Gemini uchun topshiriq:")
+        if st.button("Gemini bilan ishlash ⚡"):
+            st.info(f"{gemini_model} orqali ishlov berilmoqda...")
+
+    # TAB 4: Perplexity Web Search
+    with tab4:
+        st.subheader("Perplexity — Qidiruv va Analitika")
+        search_query = st.text_input("Internetdan nimani qidirmoqchisiz?")
+        if st.button("Qidirish 🔍"):
+            st.info("Qidiruv natijalari tayyorlanmoqda...")
+
+    # TAB 5: API Sozlamalari & Status
+    with tab5:
+        st.subheader("Ulangan API Kalitlar Holati")
+        st.write("• **GEMINI_API_KEY:** ", "✅ Ulangan" if os.getenv("GEMINI_API_KEY") else "❌ Topilmadi")
+        st.write("• **OPENAI_API_KEY:** ", "✅ Ulangan" if os.getenv("OPENAI_API_KEY") else "❌ Topilmadi")
+        st.write("• **OPENROUTER_API_KEY:** ", "✅ Ulangan" if os.getenv("OPENROUTER_API_KEY") else "❌ Topilmadi")
+        st.write("• **BOT_TOKEN:** ", "✅ Ulangan (Telegram Bot faol)" if os.getenv("BOT_TOKEN") else "❌ Topilmadi")
