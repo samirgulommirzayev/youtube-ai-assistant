@@ -8,7 +8,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN") 
-KARTA_RAQAMI = "8600 0000 0000 0000"
+KARTA_RAQAMI = "4916 9903 4491 1745"
 KARTA_EGA_ISMI = "SAMIR G."
 TOLOV_SUMMASI = "10 000 so'm"
 SAYT_LINK = "https://ulusama-ai.onrender.com"
@@ -40,7 +40,7 @@ async def process_name(message: types.Message, state: FSMContext):
         f"🔹 **Karta raqami:** `{KARTA_RAQAMI}`\n"
         f"🔹 **Karta egasi:** {KARTA_EGA_ISMI}\n"
         f"💰 **To'lov summasi:** {TOLOV_SUMMASI}\n\n"
-        f"📲 **To'lov usullari:** Click, Payme, Uzum Bank orqali to'lashingiz mumkin.\n\n"
+        f"📲 **To'lov usullari:** Click va Uzum Bank orqali to'lashingiz mumkin.\n\n"
         f"⚠️ **To'lovni amalga oshirgach, to'lov cheki (skrinshot/rasm)ni shu chatga yuboring!**"
     )
     await message.answer(text, parse_mode="Markdown")
